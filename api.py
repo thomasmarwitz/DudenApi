@@ -1,3 +1,4 @@
+# python -i api.py == exec(open("api.py").read())
 import requests
 from bs4 import BeautifulSoup
 
@@ -26,8 +27,12 @@ block-beforeafterblock-2
 
 TAGS = [tag for tag in soup.find_all("div", multi_valued_attributes=None) if tag.get("class") == "division "]
 
-tag = TAGS[0]
+tag = TAGS[0] # filter via ID
+
 # Access Content
-con = tag.contents
-con[0] = " "
-con[1].h2.get_text() # enthält Überschrift -> Perfekt nutzbar!
+content = tag.contents
+content[0] = " "
+content[1].h2.get_text() # enthält Überschrift -> Perfekt nutzbar!
+actual_content = content[2]
+bed_1 = actual_content.li # find_all("li")
+bed_1.div.get_text() # Text-Container -> Bedeutung
