@@ -23,3 +23,11 @@ aussprache
 kontext
 block-beforeafterblock-2
 """
+
+TAGS = [tag for tag in soup.find_all("div", multi_valued_attributes=None) if tag.get("class") == "division "]
+
+tag = TAGS[0]
+# Access Content
+con = tag.contents
+con[0] = " "
+con[1].h2.get_text() # enthält Überschrift -> Perfekt nutzbar!
