@@ -9,7 +9,8 @@ soup = BeautifulSoup(response.text, "lxml", multi_valued_attributes=None)
 for tag in soup.find_all("div", multi_valued_attributes=None):
     try:
         if tag["class"] == "division ":
-            print(tag["id"])
+            #print(tag["id"])
+            pass
     except KeyError:
         pass
 # yields
@@ -27,12 +28,41 @@ block-beforeafterblock-2
 
 TAGS = [tag for tag in soup.find_all("div", multi_valued_attributes=None) if tag.get("class") == "division "]
 
+# BEDEUTUNG
 tag = TAGS[0] # filter via ID
 
 # Access Content
 content = tag.contents
 content[0] = " "
-content[1].h2.get_text() # enthält Überschrift -> Perfekt nutzbar!
+title = content[1].h2 # enthält Überschrift -> Perfekt nutzbar!
+print(title.get_text())
+
+# Rechtschreibung Bsp!
+rechtschr = content[2]
+# <dl class=tuple>
+
+
+key = rechtschr.dt.get_text()
+val = rechtschr.dd.get_text()
+print(f"{key} - {val}")
+
+bsp_box = content[3]
+txt = [tag.get_text() for tag in bsp_box.find_all("li")]
+
+print("\n---\n", "\n".join(txt))
+
+import sys
+sys.exit()
+
 actual_content = content[2]
-bed_1 = actual_content.li # find_all("li")
-bed_1.div.get_text() # Text-Container -> Bedeutung
+
+bedeutung_1 = actual_content.li # find_all("li")
+
+note_title = bedeutung_1.div # Text-Container -> Bedeutung
+print(note_title.get_text())
+# <dl class="note">
+note = bedeutung_1.dl    # find_all("dl") tag["class"]="note"
+# <dt class="note__title">Beispiele</dt>
+bsp =  note.find_all("li")
+for a in bsp:
+    print("-", a.get_text())
