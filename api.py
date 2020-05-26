@@ -8,27 +8,14 @@ from bs4 import BeautifulSoup
 import re
 import pprint
 
-pp = pprint.PrettyPrinter()
-
-response = requests.get("https://www.duden.de/rechtschreibung/Haus") #"https://www.duden.de/rechtschreibung/Nullsummenspiel")#
-#response = requests.get("https://www.duden.de/rechtschreibung/Nullsummenspiel")
-
-soup = BeautifulSoup(response.text, "lxml", multi_valued_attributes=None)
-
-# yields
-"""
-rechtschreibung:    Wort|tren|nung + evtl. Infobox
-bedeutungen:        Bedeutungen + Beispielboxen
-synonyme:           Liste an Wörtern
-grammatik:          Tabelle / Zeile
-kontext:             computer generierte Assoziationen
-"""
-
-TAGS = [tag for tag in soup.find_all("div", multi_valued_attributes=None) if tag.get("class") == "division "]
-
-
-
 class MyParser:
+    """
+    rechtschreibung:    Wort|tren|nung + evtl. Infobox
+    bedeutungen:        Bedeutungen + Beispielboxen
+    synonyme:           Liste an Wörtern
+    grammatik:          Tabelle / Zeile
+    kontext:             computer generierte Assoziationen
+    """
 
     def __init__(self):
         self.store = {}
@@ -92,24 +79,42 @@ class MyParser:
 
         self.store[tag['id']] = body
 
-    def default(self, tag):
-        print(f"keine Operation: {tag['id']}")
-
     def process_kontext(self, tag):
         if (cluster := getattr(tag, "figure")) and cluster["class"] == "tag-cluster__cluster":
             body = cluster.get_text().split(" ")
             self.store[tag['id']] = body
 
+    def parse_tag(self, tag):
+        func = getattr(self, f"process_{tag['id']}", self.default)
+        func(tag)
 
-myparser = MyParser()
-def process_tag(tag):
+    def default(self, tag):
+        print(f"keine Operation: {tag['id']}")
 
-    func = getattr(myparser, f"process_{tag['id']}", myparser.default)
-    func(tag)
+def main(test=True):
+    if test is True:
+        response = requests.get("https://www.duden.de/rechtschreibung/Haus")
+    else:
+        desired_word = input("Wort?\n>> ").replace("ä", "ae").replace("ö", "oe").replace("ü", "ue")
+        # try casefold()
+        response = requests.get(f"https://www.duden.de/rechtschreibung/{desired_word.casefold()}")
+        # try title()
+        if response.status_code != "200":
+            response = requests.get(f"https://www.duden.de/rechtschreibung/{desired_word.title()}")
+
+    # parse webresponse
+    soup = BeautifulSoup(response.text, "lxml", multi_valued_attributes=None)
+    # extract data-containing fields
+    processable_tags = [tag for tag in soup.find_all("div", multi_valued_attributes=None) if tag.get("class") == "division "]
+    # init parser & parse fields
+    myparser = MyParser()
+    for tag in processable_tags:
+        myparser.parse_tag(tag)
+
+    # prettify output
+    pp = pprint.PrettyPrinter()
+    pp.pprint(myparser.store)
 
 
-for tag in TAGS:
-    process_tag(tag)# filter via ID
-
-
-pp.pprint(myparser.store)
+if __name__ == "__main__":
+    main(test=False)
