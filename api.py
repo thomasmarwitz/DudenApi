@@ -8,24 +8,13 @@ response = requests.get("https://www.duden.de/rechtschreibung/Haus")
 
 soup = BeautifulSoup(response.text, "lxml", multi_valued_attributes=None)
 
-for tag in soup.find_all("div", multi_valued_attributes=None):
-    try:
-        if tag["class"] == "division ":
-            #print(tag["id"])
-            pass
-    except KeyError:
-        pass
 # yields
 """
-rechtschreibung
-bedeutungen
-synonyme
-herkunft
-grammatik
-wussten_sie_schon
-aussprache
-kontext
-block-beforeafterblock-2
+rechtschreibung: Wort|tren|nung + evtl. Infobox
+bedeutungen: Bedeutungen + Beispielboxen
+synonyme: Liste an Wörtern
+grammatik (mh..): Tabelle / Zeile
+kontext -> computer generierte Assoziationen
 """
 
 TAGS = [tag for tag in soup.find_all("div", multi_valued_attributes=None) if tag.get("class") == "division "]
@@ -51,7 +40,7 @@ print(f"{key} - {val}")
 bsp_box = content[3]
 txt = [tag.get_text() for tag in bsp_box.find_all("li")]
 
-print("\n---\n", "\n".join(txt))
+print("\n---\n"+"\n".join(txt))
 
 import sys
 sys.exit()
