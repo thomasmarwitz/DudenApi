@@ -26,29 +26,30 @@ kontext:             computer generierte Assoziationen
 
 TAGS = [tag for tag in soup.find_all("div", multi_valued_attributes=None) if tag.get("class") == "division "]
 
-def process_field(text):
-    """Extracts all words from a given string, returns them in a list.
-    Everything that is not a char is discarded."""
-
-    new = ""
-    processing = True
-    for c in text:
-        if processing and c == "(":
-            processing = False
-        elif c == ")":
-            processing = True
-        elif processing:
-            new += c
-
-    comma_seperated = new.replace(";", ",")
-    return [item.strip() for item in comma_seperated.split(",")]
-
 
 
 class MyParser:
 
     def __init__(self):
         self.store = {}
+
+    @staticmethod
+    def parse_field(text):
+        """Extracts all words from a given string, returns them in a list.
+        Everything that is not a char is discarded."""
+
+        new = ""
+        processing = True
+        for c in text:
+            if processing and c == "(":
+                processing = False
+            elif c == ")":
+                processing = True
+            elif processing:
+                new += c
+
+        comma_seperated = new.replace(";", ",")
+        return [item.strip() for item in comma_seperated.split(",")]
 
     def process_rechtschreibung(self, tag):
         title = tag.h2.get_text() # enthält Überschrift
@@ -59,12 +60,9 @@ class MyParser:
 
         box = [li_element.get_text() for li_element in tag.find_all("li")]
 
-        self.store[tag['id']] = (title,
-                                 body,
-                                 box)
+        self.store[tag['id']] = (body, box)
 
     def process_bedeutungen(self, tag):
-        title = tag.h2.get_text() # enthält Überschrift
         body = []
         elemente = [el for el in tag.find_all("li") if el.get("class") == "enumeration__item"]
         for el in elemente:
@@ -75,15 +73,13 @@ class MyParser:
             for note in notes:
                 box = [li_element.get_text() for li_element in note.find_all("li")]
 
-        self.store[tag['id']] = (title,
-                                 body)
+        self.store[tag['id']] = body
 
     def process_bedeutung(self, tag):
         title = tag.h2.get_text()
         body = tag.p.get_text()
 
-        self.store[tag['id']] = (title,
-                                 body)
+        self.store[tag['id']] = body
 
     def process_synonyme(self, tag):
         title = tag.h2.get_text()
@@ -92,13 +88,18 @@ class MyParser:
         for li_element in tag.find_all("li"):
             raw_txt = li_element.get_text()
             # hier könnte man noch differenzieren...
-            body.extend(process_field(raw_txt))
+            body.extend(MyParser.parse_field(raw_txt))
 
-        self.store[tag['id']] = (title,
-                                 body)
+        self.store[tag['id']] = body
 
     def default(self, tag):
         print(f"keine Operation: {tag['id']}")
+
+    def process_kontext(self, tag):
+        if (cluster := getattr(tag, "figure")) and cluster["class"] == "tag-cluster__cluster":
+            body = cluster.get_text().split(" ")
+            self.store[tag['id']] = body
+
 
 myparser = MyParser()
 def process_tag(tag):
