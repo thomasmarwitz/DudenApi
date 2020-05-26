@@ -1,4 +1,6 @@
 # python -i api.py == exec(open("api.py").read())
+## Scraping all german Words!
+## [tag for tag in soup.find_all("a", multi_valued_attributes=None) if tag.get("class") == "hookup__link"]
 import requests
 from bs4 import BeautifulSoup
 
